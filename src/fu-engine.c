@@ -5388,6 +5388,37 @@ fu_engine_adopt_children (FuEngine *self, FuDevice *device)
 			}
 		}
 	}
+
+	/* using the parent physical ID makes composite devices into trees,
+	 * rather than lists */
+	for (guint i = 0; i < devices->len; i++) {
+		FuDevice *device_tmp = g_ptr_array_index (devices, i);
+		if (fu_device_get_parent_physical_id (device_tmp) == NULL)
+			continue;
+		if (g_strcmp0 (fu_device_get_parent_physical_id (device_tmp),
+			       fu_device_get_physical_id (device)) == 0) {
+			if (fu_device_get_parent (device_tmp) == device) {
+				g_warning ("device %s with parent of %s was set using ParentGuid, "
+					   "but could have been set automatically...",
+					   fu_device_get_id (device_tmp),
+					   fu_device_get_id (device));
+				continue;
+			}
+			if (fu_device_get_parent (device_tmp) != NULL &&
+			    fu_device_get_parent (device_tmp) != device) {
+				g_warning ("device %s with parent of %s was set using ParentGuid, "
+					   "but we would have set %s...",
+					   fu_device_get_id (device_tmp),
+					   fu_device_get_id (fu_device_get_parent (device_tmp)),
+					   fu_device_get_id (device));
+				continue;
+			}
+			g_warning ("device %s parent of %s was set automatically...",
+				   fu_device_get_id (device_tmp),
+				   fu_device_get_id (device));
+			fu_device_set_parent (device_tmp, device);
+		}
+	}
 }
 
 static void

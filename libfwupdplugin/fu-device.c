@@ -41,6 +41,7 @@ typedef struct {
 	gchar				*alternate_id;
 	gchar				*equivalent_id;
 	gchar				*physical_id;
+	gchar				*parent_physical_id;
 	gchar				*logical_id;
 	gchar				*backend_id;
 	gchar				*proxy_guid;
@@ -993,6 +994,9 @@ fu_device_add_child (FuDevice *self, FuDevice *child)
 	if (fu_device_get_physical_id (child) == NULL &&
 	    fu_device_get_physical_id (self) != NULL)
 		fu_device_set_physical_id (child, fu_device_get_physical_id (self));
+	if (fu_device_get_parent_physical_id (child) == NULL &&
+	    fu_device_get_parent_physical_id (self) != NULL)
+		fu_device_set_parent_physical_id (child, fu_device_get_parent_physical_id (self));
 	if (fu_device_get_vendor (child) == NULL)
 		fu_device_set_vendor (child, fu_device_get_vendor (self));
 	if (fu_device_get_vendor_ids(child)->len == 0) {
@@ -2402,6 +2406,51 @@ fu_device_get_physical_id (FuDevice *self)
 }
 
 /**
+ * fu_device_set_parent_physical_id:
+ * @self: a #FuDevice
+ * @parent_physical_id: a string that identifies the physical device connection
+ *
+ * Sets the *parent* physical ID on the device which represents the electrical
+ * connection of the device to the system.
+ *
+ * The parent physical ID is used to automatically set the device parent, which
+ * allows composite devices to be represented as a tree, rather than a list.
+ *
+ * Since: 1.6.1
+ **/
+void
+fu_device_set_parent_physical_id (FuDevice *self, const gchar *parent_physical_id)
+{
+	FuDevicePrivate *priv = GET_PRIVATE (self);
+	g_return_if_fail (FU_IS_DEVICE (self));
+
+	/* not changed */
+	if (g_strcmp0 (priv->parent_physical_id, parent_physical_id) == 0)
+		return;
+
+	g_free (priv->parent_physical_id);
+	priv->parent_physical_id = g_strdup (parent_physical_id);
+}
+
+/**
+ * fu_device_get_parent_physical_id:
+ * @self: a #FuDevice
+ *
+ * Gets the *parent* physical ID set for the device.
+ *
+ * Returns: a string value, or %NULL if never set.
+ *
+ * Since: 1.6.1
+ **/
+const gchar *
+fu_device_get_parent_physical_id (FuDevice *self)
+{
+	FuDevicePrivate *priv = GET_PRIVATE (self);
+	g_return_val_if_fail (FU_IS_DEVICE (self), NULL);
+	return priv->parent_physical_id;
+}
+
+/**
  * fu_device_remove_flag:
  * @self: a #FuDevice
  * @flag: a device flag
@@ -2845,6 +2894,8 @@ fu_device_add_string (FuDevice *self, guint idt, GString *str)
 		fu_common_string_append_kv (str, idt + 1, "EquivalentId", priv->equivalent_id);
 	if (priv->physical_id != NULL)
 		fu_common_string_append_kv (str, idt + 1, "PhysicalId", priv->physical_id);
+	if (priv->parent_physical_id != NULL)
+		fu_common_string_append_kv (str, idt + 1, "ParentPhysicalId", priv->parent_physical_id);
 	if (priv->logical_id != NULL)
 		fu_common_string_append_kv (str, idt + 1, "LogicalId", priv->logical_id);
 	if (priv->backend_id != NULL)
@@ -3838,6 +3889,8 @@ fu_device_incorporate (FuDevice *self, FuDevice *donor)
 		fu_device_set_equivalent_id (self, fu_device_get_equivalent_id (donor));
 	if (priv->physical_id == NULL && priv_donor->physical_id != NULL)
 		fu_device_set_physical_id (self, priv_donor->physical_id);
+	if (priv->parent_physical_id == NULL && priv_donor->parent_physical_id != NULL)
+		fu_device_set_parent_physical_id (self, priv_donor->parent_physical_id);
 	if (priv->logical_id == NULL && priv_donor->logical_id != NULL)
 		fu_device_set_logical_id (self, priv_donor->logical_id);
 	if (priv->backend_id == NULL && priv_donor->backend_id != NULL)
@@ -4037,6 +4090,7 @@ fu_device_finalize (GObject *object)
 	g_free (priv->alternate_id);
 	g_free (priv->equivalent_id);
 	g_free (priv->physical_id);
+	g_free (priv->parent_physical_id);
 	g_free (priv->logical_id);
 	g_free (priv->backend_id);
 	g_free (priv->proxy_guid);

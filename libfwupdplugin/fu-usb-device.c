@@ -455,6 +455,22 @@ fu_usb_device_get_spec (FuUsbDevice *self)
 #endif
 }
 
+#ifdef HAVE_GUSB
+static gchar *
+g_usb_device_get_parent_platform_id (GUsbDevice *usb_device)
+{
+	gchar *tok;
+	g_autofree gchar *platform_id = NULL;
+
+	platform_id = g_strdup (g_usb_device_get_platform_id (usb_device));
+	tok = g_strrstr (platform_id, ":");
+	if (tok == NULL)
+		return NULL;
+	*tok = '\0';
+	return g_steal_pointer (&platform_id);
+}
+#endif
+
 /**
  * fu_usb_device_set_dev:
  * @device: a #FuUsbDevice
@@ -468,6 +484,9 @@ void
 fu_usb_device_set_dev (FuUsbDevice *device, GUsbDevice *usb_device)
 {
 	FuUsbDevicePrivate *priv = GET_PRIVATE (device);
+#ifdef HAVE_GUSB
+	g_autofree gchar *parent_platform_id = NULL;
+#endif
 
 	g_return_if_fail (FU_IS_USB_DEVICE (device));
 
@@ -485,6 +504,11 @@ fu_usb_device_set_dev (FuUsbDevice *device, GUsbDevice *usb_device)
 	/* set device ID automatically */
 	fu_device_set_physical_id (FU_DEVICE (device),
 				   g_usb_device_get_platform_id (usb_device));
+
+	/* this makes composite devices into trees, rather than lists */
+	parent_platform_id = g_usb_device_get_parent_platform_id (usb_device);
+	if (parent_platform_id != NULL)
+		fu_device_set_parent_physical_id (FU_DEVICE (device), parent_platform_id);
 #endif
 }
 

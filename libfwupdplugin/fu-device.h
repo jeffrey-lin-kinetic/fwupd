@@ -310,6 +310,9 @@ void		 fu_device_uninhibit			(FuDevice	*self,
 const gchar	*fu_device_get_physical_id		(FuDevice	*self);
 void		 fu_device_set_physical_id		(FuDevice	*self,
 							 const gchar	*physical_id);
+const gchar	*fu_device_get_parent_physical_id	(FuDevice	*self);
+void		 fu_device_set_parent_physical_id	(FuDevice	*self,
+							 const gchar	*parent_physical_id);
 const gchar	*fu_device_get_logical_id		(FuDevice	*self);
 void		 fu_device_set_logical_id		(FuDevice	*self,
 							 const gchar	*logical_id);
