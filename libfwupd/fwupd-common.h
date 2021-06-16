@@ -90,5 +90,6 @@ gchar		*fwupd_guid_hash_string			(const gchar	*str);
 gchar		*fwupd_guid_hash_data			(const guint8	*data,
 							 gsize		 datasz,
 							 FwupdGuidFlags	 flags);
+gchar		*fwupd_checksum_format_for_display	(const gchar	*checksum);
 
 G_END_DECLS
