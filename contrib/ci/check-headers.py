@@ -18,7 +18,7 @@ def __get_includes(fn: str) -> List[str]:
         for line in f.read().split("\n"):
             if line.find("#include") == -1:
                 continue
-            if line.endswith("//waive-pre-commit"):
+            if line.endswith("waive-pre-commit"):
                 continue
             for char in ["<", ">", '"']:
                 line = line.replace(char, "")
@@ -34,16 +34,20 @@ def test_files() -> int:
 
     toplevel_headers = ["libfwupd/fwupd.h", "libfwupdplugin/fwupdplugin.h"]
     toplevel_headers_nopath = [os.path.basename(fn) for fn in toplevel_headers]
-    lib_headers = glob.glob('libfwupd*/*.h')
-    lib_headers.remove ('libfwupd/fwupd.h')
-    lib_headers.remove ('libfwupdplugin/fwupdplugin.h')
+    lib_headers = glob.glob("libfwupd*/*.h")
+    lib_headers.remove("libfwupd/fwupd.h")
+    lib_headers.remove("libfwupdplugin/fwupdplugin.h")
     lib_headers_nopath = [os.path.basename(fn) for fn in lib_headers]
 
     # test all C and H files
     for fn in glob.glob("**/*.[c|h]", recursive=True):
         includes = __get_includes(fn)
 
-        if fn.startswith('plugins'):
+        if (
+            fn.startswith("plugins")
+            and not fn.endswith("self-test.c")
+            and not fn.endswith("-tool.c")
+        ):
             for include in includes:
                 # check for using private header use in plugins
                 if include.endswith("private.h"):
